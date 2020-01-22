@@ -21,16 +21,16 @@ const StudentData: FC<StudentDataProps> = observer(({ data }: StudentDataProps) 
 			<DataTable
 				cols={[
 					{ id: 'StudentName', title: '' },
-					{ id: 'TotalGradCreditsEarned', title: 'Total Grad Credits Earned' },
+					{ id: 'TotalEarnedGradCredits', title: 'Total Grad Credits Earned' },
 					{
-						id: 'TotalCreditsEarned',
+						id: 'TotalEarnedCredits',
 						title: 'Total Credits Earned'
 					},
 					{
 						id: 'CurrentGradeLevel',
 						title: 'Current Grade Level'
 					},
-					{ id: 'LastGradedQtr', title: 'Last Graded Quarter' },
+					{ id: 'LastGradedQuarter', title: 'Last Graded Quarter' },
 					{ id: 'CreditDeficiencyStatus', title: 'Credit Deficiency Status' }
 				]}
 				data={[data]}

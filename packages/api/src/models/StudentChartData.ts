@@ -33,6 +33,13 @@ export interface StudentGradeBreakdownItem {
 	EarnedGradCredits: number;
 	RemainingCreditsRequiredByLastGradedQuarter: number;
 	RemainingCreditsRequiredByEndOfCurrentGradeLevel: number;
+	/**
+	 * Used to power gray area of grad requirement chart
+	 */
+	DifferentialRemainingCreditsRequiredByGraduation: number;
+	/**
+	 * Used to populate column in grade breakdown table
+	 */
 	RemainingCreditsRequiredByGraduation: number;
 	DisplayOrder: number;
 }

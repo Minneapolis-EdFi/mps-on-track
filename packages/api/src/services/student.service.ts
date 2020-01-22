@@ -13,6 +13,7 @@ interface StudentGradeBreakdownQuery {
 	EarnedGradCredits: number;
 	RemainingCreditsRequiredByLastGradedQuarter: number;
 	RemainingCreditsRequiredByEndOfCurrentGradeLevel: number;
+	DifferentialRemainingCreditsRequiredByGraduation: number;
 	RemainingCreditsRequiredByGraduation: number;
 	TotalGradCredits: number;
 	TotalRequiredByLastGradedQuarter: number;
@@ -38,7 +39,7 @@ interface StudentCourseCreditsQuery {
 	SchoolYearWhenTaken: number;
 	Term: string;
 	GradeDetails: string;
-	Credits: number;
+	CourseCreditsReported: number;
 	DisplayOrder: number;
 }
 
@@ -49,19 +50,21 @@ export default class StudentService {
 		this.db = db;
 	}
 
-	async getGradeBreakdownForStudent(studentId: string): Promise<StudentGradeBreakdownResponse> {
+	async getGradeBreakdownForStudent(
+		studentUniqueId: string
+	): Promise<StudentGradeBreakdownResponse> {
 		const { recordset } = await this.db.query<StudentGradeBreakdownQuery>`SELECT GradRequirement,
 			EarnedGradCredits,
 			RemainingCreditsRequiredByLastGradedQuarter,
 			RemainingCreditsRequiredByEndOfCurrentGradeLevel,
 			RemainingCreditsRequiredByGraduation,
+			DifferentialRemainingCreditsRequiredByGraduation,
 			SUM(EarnedGradCredits) OVER () as TotalGradCredits,
 			SUM(RemainingCreditsRequiredByLastGradedQuarter) OVER () as TotalRequiredByLastGradedQuarter,
 			SUM(RemainingCreditsRequiredByEndOfCurrentGradeLevel) OVER () as TotalRequiredByEndOfCurrentGradeLevel,
 			SUM(RemainingCreditsRequiredByGraduation) OVER () as TotalRequiredByGraduation,
 			DisplayOrder
-		FROM [gradCredits].[StudentsChartData]
-		WHERE StudentID = ${studentId}
+		FROM [gradCredits].GetStudentChartData(${studentUniqueId})
 		ORDER BY DisplayOrder`;
 
 		const items = recordset.map(item => {
@@ -89,7 +92,7 @@ export default class StudentService {
 		};
 	}
 
-	async getAtAGlanceForStudent(studentId: string): Promise<StudentAtAGlanceResponse> {
+	async getAtAGlanceForStudent(studentUniqueId: string): Promise<StudentAtAGlanceResponse> {
 		const { recordset } = await this.db.query<StudentAtAGlanceQuery>`SELECT GradRequirement,
 			GradRequirementGroup,
 			EarnedGradCredits,
@@ -99,8 +102,7 @@ export default class StudentService {
 			SUM(CreditValueRequired) OVER () as TotalCreditsRequired,
 			SUM(CreditValueRemaining) OVER () as TotalCreditsRemaining,
 			DisplayOrder
-		FROM [gradCredits].[StudentsChartData]
-		WHERE StudentID = ${studentId}
+		FROM [gradCredits].GetStudentChartData(${studentUniqueId})
 		ORDER BY DisplayOrder`;
 
 		if (recordset.length === 0) {
@@ -139,28 +141,26 @@ export default class StudentService {
 		};
 	}
 
-	async getStudentData(studentId: string): Promise<StudentDataResponse | null> {
+	async getStudentData(studentUniqueId: string): Promise<StudentDataResponse | null> {
 		const { recordset } = await this.db.query<StudentDataResponse>`SELECT StudentName,
-			TotalCreditsEarned,
-			TotalGradCreditsEarned,
+			TotalEarnedCredits,
+			TotalEarnedGradCredits,
 			CurrentGradeLevel,
-			LastGradedQtr,
+			LastGradedQuarter,
 			CreditDeficiencyStatus
-		FROM [gradCredits].[StudentsData]
-		WHERE StudentID = ${studentId}`;
+		FROM [gradCredits].GetStudentData(${studentUniqueId})`;
 
 		return isEmpty(recordset) ? null : recordset[0];
 	}
 
-	async getCourseCredits(studentId: string): Promise<StudentCourseCreditResponse> {
+	async getCourseCredits(studentUniqueId: string): Promise<StudentCourseCreditResponse> {
 		const { recordset } = await this.db.query<StudentCourseCreditsQuery>`SELECT CourseDetails,
 			SchoolYearWhenTaken,
 			Term,
 			GradeDetails,
-			Credits,
+			CourseCreditsReported,
 			DisplayOrder
-		FROM [gradCredits].[StudentCourseCredits]
-		WHERE StudentID = ${studentId}
+		FROM [gradCredits].GetStudentChartDataGrades(${studentUniqueId})
 		ORDER BY DisplayOrder`;
 
 		if (isEmpty(recordset)) {

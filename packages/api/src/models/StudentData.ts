@@ -4,19 +4,19 @@ export interface StudentData {
 	StudentID: string;
 	StudentName: string | null;
 	SchoolName: string | null;
-	LastGradedQtr: string | null;
+	LastGradedQuarter: string | null;
 	CurrentGradeLevel: string | null;
 	CreditDeficiencyStatus: string | null;
-	TotalCreditsEarned: number | null;
-	TotalGradCreditsEarned: number | null;
+	TotalEarnedCredits: number | null;
+	TotalEarnedGradCredits: number | null;
 	SurnameGroup: string;
 }
 
 export interface StudentDataResponse {
 	StudentName: string;
-	LastGradedQtr: string;
+	LastGradedQuarter: string;
 	CurrentGradeLevel: string;
 	CreditDeficiencyStatus: string;
-	TotalCreditsEarned: number;
-	TotalGradCreditsEarned: number;
+	TotalEarnedCredits: number;
+	TotalEarnedGradCredits: number;
 }

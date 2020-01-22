@@ -38,7 +38,7 @@ const StudentDataChart: FC<ChartProps> = observer(({ data }: ChartProps) => {
 			{
 				label: 'Remaining Credits Required By Graduation',
 				backgroundColor: chartColors.gray,
-				data: data.Items.map(item => item.RemainingCreditsRequiredByGraduation)
+				data: data.Items.map(item => item.DifferentialRemainingCreditsRequiredByGraduation)
 			}
 		]
 	};

@@ -113,7 +113,7 @@ const StudentCourseCredits: FC<StudentCourseCreditsProps> = observer(
 				<DataTable
 					cols={[
 						{ id: 'name', title: '' },
-						{ id: 'Credits', title: 'Counts' }
+						{ id: 'CourseCreditsReported', title: 'Counts' }
 					]}
 					data={tableData}
 					idProp={row => row.name}
