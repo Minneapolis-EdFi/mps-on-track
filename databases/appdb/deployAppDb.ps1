@@ -6,8 +6,6 @@ param(
 
 )
 
-# $connStr = "Server=localhost,1401;Database=OnTrackDb;User Id=SA;Password=HotSprocket123!;"
-
 rh --connectionstring $ConnStr --databasetype=sqlserver --silent --files "." --environment $Environment --warnandignoreononetimescriptchanges
 
 if ($? -eq $True) {

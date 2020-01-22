@@ -1,12 +1,12 @@
 import { RequestHandler } from 'express';
 
-export type GenMiddleware = (...args: any) => RequestHandler;
+export type AuthzMiddleware = (idParam: string) => RequestHandler;
 
 /**
  * Forbid users from requesting records for a different student than what's in their token
  */
-const authorizationMiddleware: GenMiddleware = (param: string) => (req, res, next) => {
-	if (req.user.uniqueStudentId !== req.params[param]) {
+const authorizationMiddleware: AuthzMiddleware = (idParam: string) => (req, res, next) => {
+	if (req.user.studentUniqueId !== req.params[idParam]) {
 		res.status(403).json('Unauthorized');
 	} else {
 		next();

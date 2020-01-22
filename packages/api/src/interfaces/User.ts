@@ -3,7 +3,7 @@ interface User {
 	exp: number;
 	aud: string;
 	iss: string;
-	uniqueStudentId: string;
+	studentUniqueId: string;
 }
 
 export default User;

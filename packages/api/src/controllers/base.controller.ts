@@ -32,10 +32,10 @@ export default class BaseController implements Controller {
 	// For testing purposes only
 	private getToken: RequestHandler = (_req, res, next) => {
 		try {
-			const uniqueStudentId = '524360-360';
+			const studentUniqueId = '524360-360';
 
 			const claims = {
-				uniqueStudentId
+				studentUniqueId
 			};
 
 			const token = jwt.sign(claims, JWT_SECRET as string, {
@@ -48,7 +48,7 @@ export default class BaseController implements Controller {
 				url.format({
 					pathname: 'http://localhost:8001',
 					query: {
-						student: uniqueStudentId,
+						student: studentUniqueId,
 						token
 					}
 				})
