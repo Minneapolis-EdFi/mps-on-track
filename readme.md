@@ -119,6 +119,19 @@ This will:
 
 In practice, you should just have to kick off a new TeamCity build. This will give you the artifact.zip file you need to deploy.
 
+### TeamCity config values
+
+You shoud confirm that the following environment variables are set up in the TeamCity build
+configuration. Using Staging as an example:
+
+| Name                   | Value                                             |
+| ---------------------- | ------------------------------------------------- |
+| env.API_URL            | `https://pulse-staging.mpls.k12.mn.us/ontrackapi` |
+| env.APP_ENV            | `staging` (`prod` for production)                 |
+| env.CLIENT_PUBLIC_PATH | `https://pulse-staging.mpls.k12.mn.us/ontrack/`   |
+| env.COMMIT_HASH        | `%build.vcs.number%`                              |
+| env.PATH               | `%env.Path%;"C:\Program Files (x86)\Yarn\bin"`    |
+
 ### Setting up the server
 
 #### Prerequisites to run on the server:
