@@ -17,5 +17,5 @@
 }
 
 .expand-btn {
-	@apply bg-gray-500 inline-block w-4 h-4 leading-none rounded-sm;
+	@apply text-black bg-gray-500 inline-block w-4 h-4 leading-none rounded-sm;
 }

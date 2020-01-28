@@ -4,7 +4,6 @@
 import React, { FC, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTable, useExpanded, Column } from 'react-table';
-import { flatMap, uniq } from 'lodash-es';
 
 import { StudentGradeBreakdownResponse, StudentCourseCreditResponse } from '@mps/api';
 import { useStores } from '../../stores';
@@ -155,30 +154,6 @@ const StudentCourseCredits: FC<StudentCourseCreditsProps> = observer(
 			return [...acc, schoolYear];
 		}, [] as any);
 
-		// const gradRequirementCols = tableData.reduce((acc, sy) => {
-		// 	const l1 = flatMap(sy.subRows, (r: Item) => r.subRows);
-		// 	return [...acc, ...l1];
-		// }, [] as any);
-
-		const statusSort = [
-			'Counts',
-			'Does not count: Course Sequence Not Found',
-			'Does not count: Course Not Passed',
-			'Counts: Course Not Passed',
-			'Courses Not Taken Yet'
-		];
-
-		const foundStatuses = uniq(
-			tableData
-				.reduce((acc, sy) => {
-					const l1 = flatMap(sy.subRows, r => r.subRows);
-					return [...acc, ...l1];
-				}, [] as Item[])
-				.map(el => el.Status)
-		);
-
-		const statuses = statusSort.filter(el => foundStatuses.includes(el));
-
 		const columns = useMemo(() => {
 			const cols: Column[] = [
 				{
@@ -218,13 +193,6 @@ const StudentCourseCredits: FC<StudentCourseCreditsProps> = observer(
 					Header: 'Grad Requirement',
 					accessor: 'GradRequirement'
 				},
-				// {
-				// 	Header: 'Grad Requirement',
-				// 	columns: uniqBy<Item>(gradRequirementCols, c => c.GradRequirement).map((c: Item) => ({
-				// 		Header: c.GradRequirement,
-				// 		accessor: c.GradRequirement
-				// 	}))
-				// },
 				{
 					Header: 'Status',
 					accessor: 'Status'

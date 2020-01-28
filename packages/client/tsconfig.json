@@ -1,11 +1,17 @@
 {
 	"extends": "../../tsconfig.json",
 	"lib": ["dom", "es5", "es2015.promise"],
-	"jsx": "react",
 	"compilerOptions": {
+		"target": "es5",
+		"module": "esnext",
+
 		"outDir": "./dist",
 		"rootDir": "./src",
-		"typeRoots": ["./src/types", "./node_modules/@types"]
+		"typeRoots": ["./src/types", "./node_modules/@types"],
+
+		"jsx": "react",
+		"downlevelIteration": true,
+		"importHelpers": true
 	},
 	"references": [{ "path": "../api" }],
 	"include": ["src/**/*"]

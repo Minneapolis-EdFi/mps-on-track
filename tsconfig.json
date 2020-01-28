@@ -1,8 +1,5 @@
 {
 	"compilerOptions": {
-		"target": "es6",
-		"module": "commonjs",
-		"jsx": "react",
 		"composite": true,
 		"declaration": true,
 		"declarationMap": true,
@@ -13,6 +10,7 @@
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
+		"forceConsistentCasingInFileNames": true,
 		"baseUrl": "./",
 		"paths": {
 			"@mps/*": ["packages/*/src"]

@@ -188,7 +188,6 @@ module.exports = env => {
 					// e.g. with `btn-${color}`
 					whitelistPatterns: [
 						/^btn-/,
-						/^panel-stack-/,
 						/\-appear$/,
 						/\-appear-active$/,
 						/\-appear-done$/,
@@ -208,7 +207,7 @@ module.exports = env => {
 					banner: `MPS On Track Application - Copyright ${new Date().getFullYear()} Double Line, Inc. - All Rights Reserved (${commitHash})`
 				})
 			)
-		].filter(el => el),
+		].filter(el => !!el),
 
 		stats: 'minimal',
 

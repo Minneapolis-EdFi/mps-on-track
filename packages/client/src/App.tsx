@@ -3,7 +3,7 @@ import { configure } from 'mobx';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@reach/tabs';
 
 import { GradRequirements, GradeBreakdown, AtAGlance } from './screens';
-import { useOnMount } from './utilities';
+import { useOnMount, isIE } from './utilities';
 import api from './api';
 import { useStores } from './stores';
 import { ApiResponse } from '@mps/api';
@@ -75,7 +75,7 @@ const App: FC = () => {
 				</Tabs>
 			</div>
 
-			{!isProd && (
+			{!isProd && !isIE && (
 				<footer className="bg-gray-800 mt-4 px-2">
 					<code className="text-white mr-4">
 						Env: {process.env.APP_ENV} ({process.env.COMMIT_HASH})

@@ -2,6 +2,9 @@
 	"extends": "../../tsconfig.json",
 	"lib": ["es5", "es6"],
 	"compilerOptions": {
+		"target": "es6",
+		"module": "commonjs",
+
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"typeRoots": ["./src/types", "./node_modules/@types"]
