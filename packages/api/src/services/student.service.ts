@@ -36,10 +36,12 @@ interface StudentAtAGlanceQuery {
 
 interface StudentCourseCreditsQuery {
 	CourseDetails: string;
-	SchoolYearWhenTaken: number;
+	SchoolYearWhenTaken: string;
 	Term: string;
 	GradeDetails: string;
 	CourseCreditsReported: number;
+	GradRequirement: string;
+	Status: string;
 	DisplayOrder: number;
 }
 
@@ -159,6 +161,8 @@ export default class StudentService {
 			Term,
 			GradeDetails,
 			CourseCreditsReported,
+			GradRequirement,
+			Status,
 			DisplayOrder
 		FROM [gradCredits].GetStudentChartDataGrades(${studentUniqueId})
 		ORDER BY DisplayOrder`;
@@ -171,12 +175,28 @@ export default class StudentService {
 
 		const byYear = groupBy(recordset, item => item.SchoolYearWhenTaken);
 
+		// TEMPORARY
+		if (byYear.null) {
+			byYear['N/A'] = byYear.null;
+			delete byYear.null;
+		}
+
 		const byYearGrade = Object.entries(byYear).map(([year, list]) => {
 			const byGrade = groupBy(list, item => item.GradeDetails);
 
+			if (byGrade.null) {
+				byGrade['N/A'] = byGrade.null;
+				delete byGrade.null;
+			}
+
 			const details = Object.entries(byGrade).map(([grade, courses]) => ({
 				Grade: grade,
-				Courses: courses.map(({ SchoolYearWhenTaken, GradeDetails, Term, ...rest }) => rest)
+				Courses: courses.map(({ SchoolYearWhenTaken, GradeDetails, Term, ...rest }) => ({
+					...rest,
+					...((SchoolYearWhenTaken === 'N/A' || SchoolYearWhenTaken === null) && {
+						Status: 'Courses Not Taken Yet'
+					})
+				}))
 			}));
 
 			return {

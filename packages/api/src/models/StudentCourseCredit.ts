@@ -19,6 +19,8 @@ export interface StudentCourseCredit {
 export interface CourseCreditItem {
 	CourseDetails: string;
 	CourseCreditsReported: number;
+	GradRequirement: string;
+	Status: string;
 	DisplayOrder: number;
 }
 

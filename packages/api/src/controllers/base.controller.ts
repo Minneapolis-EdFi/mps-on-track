@@ -32,7 +32,7 @@ export default class BaseController implements Controller {
 	// For testing purposes only
 	private getToken: RequestHandler = (_req, res, next) => {
 		try {
-			const studentUniqueId = '600125489';
+			const studentUniqueId = '1430492';
 
 			const claims = {
 				studentUniqueId

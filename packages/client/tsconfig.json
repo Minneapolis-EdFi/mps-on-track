@@ -4,7 +4,8 @@
 	"jsx": "react",
 	"compilerOptions": {
 		"outDir": "./dist",
-		"rootDir": "./src"
+		"rootDir": "./src",
+		"typeRoots": ["./src/types", "./node_modules/@types"]
 	},
 	"references": [{ "path": "../api" }],
 	"include": ["src/**/*"]

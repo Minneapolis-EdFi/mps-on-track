@@ -1439,6 +1439,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-table@^7.0.3":
+  version "7.0.3"
+  resolved "https://registry.yarnpkg.com/@types/react-table/-/react-table-7.0.3.tgz#ded8918c61c7853c281076988d8ea18612c65967"
+  integrity sha512-iR+zL53bQi10tOpLyFh0L0X1LAf5KhHmeMxjZlIsID2K4L2t00wiZ1kA5j4MvuqfK37LdgWccH72ZmXhitQgdw==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-transition-group@^4.2.3":
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-4.2.3.tgz#4924133f7268694058e415bf7aea2d4c21131470"
@@ -9816,7 +9823,7 @@ react-is@^16.8.1, react-is@^16.8.4:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.12.0.tgz#2cc0fe0fba742d97fd527c42a13bec4eeb06241c"
   integrity sha512-rPCkf/mWBtKc97aLL9/txD8DZdemK0vkA3JMLShjlJB3Pj3s+lpf1KaBzMfQrAmhMQB0n1cU/SUGgKKBCe837Q==
 
-react-table@^7.0.0-beta.28:
+react-table@^7.0.0-rc.15:
   version "7.0.0-rc.15"
   resolved "https://registry.yarnpkg.com/react-table/-/react-table-7.0.0-rc.15.tgz#bb855e4e2abbb4aaf0ed2334404a41f3ada8e13a"
   integrity sha512-ofMOlgrioHhhvHjvjsQkxvfQzU98cqwy6BjPGNwhLN1vhgXeWi0mUGreaCPvRenEbTiXsQbMl4k3Xmx3Mut8Rw==

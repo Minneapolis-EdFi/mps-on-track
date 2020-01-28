@@ -30,8 +30,7 @@ const StudentData: FC<StudentDataProps> = observer(({ data }: StudentDataProps) 
 						id: 'CurrentGradeLevel',
 						title: 'Current Grade Level'
 					},
-					{ id: 'LastGradedQuarter', title: 'Last Graded Quarter' },
-					{ id: 'CreditDeficiencyStatus', title: 'Credit Deficiency Status' }
+					{ id: 'LastGradedQuarter', title: 'Last Graded Quarter' }
 				]}
 				data={[data]}
 				idProp={row => row.StudentName}
