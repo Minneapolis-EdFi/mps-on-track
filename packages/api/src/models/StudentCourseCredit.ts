@@ -7,7 +7,7 @@ export interface StudentCourseCredit {
 	CourseDetails: string | null;
 	ComputationStatus: string | null;
 	GradRequirement: string | null;
-	CourseCreditsReported: number | null;
+	CreditsContributedByCourse: number | null;
 	SurnameGroup: string | null;
 	GradeDetails: string | null;
 	SchoolYearWhenTaken: number | null;
@@ -18,7 +18,7 @@ export interface StudentCourseCredit {
 
 export interface CourseCreditItem {
 	CourseDetails: string;
-	CourseCreditsReported: number;
+	CreditsContributedByCourse: number;
 	GradRequirement: string;
 	Status: string;
 	DisplayOrder: number;

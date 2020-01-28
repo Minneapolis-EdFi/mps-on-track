@@ -39,7 +39,7 @@ interface StudentCourseCreditsQuery {
 	SchoolYearWhenTaken: string;
 	Term: string;
 	GradeDetails: string;
-	CourseCreditsReported: number;
+	CreditsContributedByCourse: number;
 	GradRequirement: string;
 	Status: string;
 	DisplayOrder: number;
@@ -160,7 +160,7 @@ export default class StudentService {
 			SchoolYearWhenTaken,
 			Term,
 			GradeDetails,
-			CourseCreditsReported,
+			CreditsContributedByCourse,
 			GradRequirement,
 			Status,
 			DisplayOrder

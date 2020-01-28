@@ -187,7 +187,7 @@ const StudentCourseCredits: FC<StudentCourseCreditsProps> = observer(
 				},
 				{
 					Header: 'Counts',
-					accessor: 'CourseCreditsReported'
+					accessor: 'CreditsContributedByCourse'
 				},
 				{
 					Header: 'Grad Requirement',
