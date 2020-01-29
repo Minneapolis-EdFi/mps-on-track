@@ -37,7 +37,7 @@ Reference the [SQL Server on Docker documentation](https://docs.microsoft.com/en
 
 1. In Powershell, run migrations and insert test data:
 
-```sh
+```powershell
 PS> cd .\localDev
 PS> .\deployLocalAppDb.ps1
 ```
@@ -78,6 +78,22 @@ If running `lerna` doesn't work, make sure you add the result of `yarn global bi
 3. VS Code's terminal will show that the API is now running, and you can set breakpoints if you'd like.
 
 Note that when you make changes, you'll need to wait a couple seconds before starting the API so TypeScript has a chance to write out the new code to dist/.
+
+## Debug messages
+
+To view runtime debug messages, set the `NODE_DEBUG` environment variable when launching the API:
+
+In Powershell:
+
+```powershell
+PS> $env:NODE_DEBUG='ontrack'; node .\dist\index.js
+```
+
+In Git Bash:
+
+```sh
+$ NODE_DEBUG=ontrack node ./dist/index.js
+```
 
 ## Running the web client
 
@@ -121,7 +137,7 @@ In practice, you should just have to kick off a new TeamCity build. This will gi
 
 ### TeamCity config values
 
-You shoud confirm that the following environment variables are set up in the TeamCity build
+You should confirm that the following environment variables are set up in the TeamCity build
 configuration. Using Staging as an example:
 
 | Name                   | Value                                             |

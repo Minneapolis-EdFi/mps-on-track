@@ -1,6 +1,12 @@
+import { debug } from './log';
 import { getConfig } from './get-config';
 
-getConfig();
+debug('getting config');
+
+// add config values to process.env
+const foundConfig = getConfig();
+
+debug(`config found: ${JSON.stringify(foundConfig)}`);
 
 import Server from './server';
 import { connect } from './db-connect';

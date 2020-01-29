@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { debug } from '../log';
 import { ApiResponse } from '../models';
 
 const isProd = process.env.ENV === 'prod';
@@ -11,6 +12,12 @@ const formatResponse = (result: any, message?: string): ApiResponse<any> => {
 	if (result && result instanceof Array) {
 		data = result;
 	} else if (result && result instanceof Error) {
+		debug(
+			`formatting an error response, isProd === ${isProd} - ${
+				isProd ? 'hiding' : 'showing'
+			} stacktrace`
+		);
+
 		const stringified = isProd
 			? { message: result.message }
 			: JSON.parse(JSON.stringify(result, Object.getOwnPropertyNames(result)));
