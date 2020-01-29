@@ -44,7 +44,7 @@ const StudentDataChart: FC<ChartProps> = observer(({ data }: ChartProps) => {
 	};
 
 	return (
-		<div className="min-h-md">
+		<div className="min-h-sm">
 			<Bar
 				data={chartData}
 				width={100}

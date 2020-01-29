@@ -52,8 +52,9 @@ const App: FC = () => {
 	}
 
 	return (
-		<div className="flex flex-col min-h-full min-w-lg font-sans text-sm">
-			<div className="container mx-auto flex-1 px-2 md:px-8 mt-4">
+		<div className="flex flex-col min-h-full min-w-md font-sans text-sm">
+			{/* Change `w-full` to `container` to look good outside the 800px-wide dashboard */}
+			<div className="w-full mx-auto flex-1 px-2 md:px-8 mt-4">
 				<Tabs>
 					<TabList>
 						<Tab>On-Track Visualization</Tab>
