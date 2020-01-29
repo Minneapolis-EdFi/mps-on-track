@@ -48,7 +48,7 @@ export default class BaseController implements Controller {
 				url.format({
 					pathname: 'http://localhost:8001',
 					query: {
-						student: studentUniqueId,
+						studentUniqueId,
 						token
 					}
 				})

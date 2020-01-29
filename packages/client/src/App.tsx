@@ -30,7 +30,7 @@ const App: FC = () => {
 	useOnMount(() => {
 		const params = new URLSearchParams(window.location.search);
 		const token = params.get('token');
-		const student = params.get('student');
+		const student = params.get('studentUniqueId');
 
 		if (token !== null) {
 			api.setBearerToken(token);
