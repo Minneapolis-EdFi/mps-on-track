@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { debug } from '../log';
 import { ApiResponse } from '../models';
 
-const isProd = process.env.ENV === 'prod';
+const isProd = process.env.ONTRACK_ENV === 'prod';
 
 const formatResponse = (result: any, message?: string): ApiResponse<any> => {
 	let errors: any[] = [];

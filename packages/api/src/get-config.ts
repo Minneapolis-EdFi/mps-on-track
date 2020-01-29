@@ -1,16 +1,22 @@
 import findUp from 'find-up';
 
+import { debug } from './log';
+
 /**
  * Take values found in config file and add them to process.env
  */
 export const getConfig = () => {
 	const filename = 'ontrack.config.json';
 
-	const configFile = findUp.sync(filename);
+	const configFile = findUp.sync(filename, {
+		cwd: __dirname
+	});
 
 	if (configFile === undefined) {
 		throw new Error(`config file ${filename} not found!`);
 	}
+
+	debug(`found config file: ${configFile}`);
 
 	const config = require(configFile);
 
