@@ -57,7 +57,7 @@ const App: FC = () => {
 			<div className="w-full mx-auto flex-1 px-2 md:px-8 mt-4">
 				<Tabs>
 					<TabList>
-						<Tab>On-Track Visualization</Tab>
+						<Tab>Grad Path Visualization</Tab>
 						<Tab>Student Grade Breakdown</Tab>
 						<Tab>At a Glance</Tab>
 					</TabList>

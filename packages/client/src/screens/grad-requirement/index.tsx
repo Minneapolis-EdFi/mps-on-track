@@ -58,7 +58,15 @@ const StudentDataChart: FC<ChartProps> = observer(({ data }: ChartProps) => {
 					maintainAspectRatio: false,
 					scales: {
 						xAxes: [{ stacked: true }],
-						yAxes: [{ stacked: true }]
+						yAxes: [
+							{
+								stacked: true,
+								scaleLabel: {
+									display: true,
+									labelString: 'Credits'
+								}
+							}
+						]
 					}
 				}}
 			/>
