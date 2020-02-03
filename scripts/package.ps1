@@ -12,6 +12,9 @@ Set-Location ..\..
 
 Write-Host $cwd
 
+Write-Host "adding nohoist declaration to root package.json"
+node scripts/nohoist.js add
+
 # keep reference to development dependencies, if any
 if (Test-Path .\dev_node_modules) {
 	Remove-Item .\dev_node_modules -Recurse -Force
@@ -46,6 +49,9 @@ Write-Host "Restoring development node_modules"
 Move-Item .\dev_node_modules .\node_modules -Force
 # yarn install
 Move-Item dev_yarn.lock yarn.lock -Force
+
+Write-Host "removing nohoist declaration from root package.json"
+node scripts/nohoist.js remove
 
 # back to package
 Set-Location $cwd

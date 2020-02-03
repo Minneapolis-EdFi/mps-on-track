@@ -13,6 +13,7 @@ export interface Props {
 	fulfilled: (resp: any) => ReactElement | null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 const dummyPromise = fromPromise(new Promise(() => {}));
 
 export const Async: FunctionComponent<Props> = observer(

@@ -27,7 +27,8 @@ Reference the [SQL Server on Docker documentation](https://docs.microsoft.com/en
 
 ### Install RoundhousE
 
-1. Install the dotnet global tool for [RoundhousE](https://github.com/chucknorris/roundhouse):
+1. Make sure you have the .NET Core SDK 2.1 installed from https://dotnet.microsoft.com/download/dotnet-core/2.1
+2. Install the dotnet global tool for [RoundhousE](https://github.com/chucknorris/roundhouse):
 
 ```sh
 > dotnet tool install --global dotnet-roundhouse --version 1.1.0
@@ -44,7 +45,7 @@ PS> .\deployLocalAppDb.ps1
 
 ## Running the API
 
-1. Install [Yarn](https://yarnpkg.com/en/docs/install). On Windows, using [Chocolatey](https://chocolatey.org/) is the easiest way to install and keep Yarn up to date.
+1. Install [Yarn](https://yarnpkg.com/en/docs/install). On Windows, using [Chocolatey](https://chocolatey.org/) is the easiest way to install and keep Yarn up to date:
 
 ```sh
 > choco install yarn
@@ -56,7 +57,7 @@ PS> .\deployLocalAppDb.ps1
 > yarn global add lerna
 ```
 
-If running `lerna` doesn't work, make sure you add the result of `yarn global bin` to your \$PATH in your _system_ environment variables, not just for your user.
+If running `lerna` on the command line after this doesn't work, make sure you add the result of `yarn global bin` to your \$PATH in your _system_ environment variables, not just for your user.
 
 3. Install dependencies:
 
@@ -137,8 +138,7 @@ In practice, you should just have to kick off a new TeamCity build. This will gi
 
 ### TeamCity config values
 
-You should confirm that the following environment variables are set up in the TeamCity build
-configuration. Using Staging as an example:
+You should confirm that the following environment variables are set up in the TeamCity build configuration. **For a production deploy, the config values below must be set correctly before running the build.** Using Staging as an example:
 
 | Name                   | Value                                             |
 | ---------------------- | ------------------------------------------------- |
@@ -165,7 +165,7 @@ configuration. Using Staging as an example:
 #### To deploy:
 
 1. Make sure you've manually copied scripts\deploy.ps1 to the server, at c:\ontrack-deploy\deploy.ps1
-2. Make sure you've manually copied and updated ontrack.config.json to c:\ontrack-deploy
+2. Make sure you've manually copied and updated ontrack.config.json to c:\ontrack-deploy. The ontrack.config.json file should be updated to the correct values for whatever environment you'll be deploying to (e.g., set the correct ODS DB credentials).
 3. Manually upload the artifact.zip file from TeamCity to c:\ontrack-deploy.
 4. Navigate to c:\ontrack-deploy in Powershell, and run .\deploy.ps1
 

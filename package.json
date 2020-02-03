@@ -4,9 +4,6 @@
 	"workspaces": {
 		"packages": [
 			"packages/*"
-		],
-		"nohoist": [
-			"@mps/api/**"
 		]
 	},
 	"scripts": {
