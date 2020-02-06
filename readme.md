@@ -100,8 +100,17 @@ $ NODE_DEBUG=ontrack node ./dist/index.js
 
 1. Navigate to packages/client
 2. Run `yarn start`
+3. Visit http://localhost:8001
 
 This will start Webpack's dev server, and auto-reload on changes to the front-end code.
+
+### Helper API route
+
+As a helpful way to open the web client with its querystring parameters specified (`studentUniqueId` and `token`), you can hit this in your browser:
+
+http://localhost:4000/api/token
+
+You can see where this route is defined in `base.controller.ts`, but the gist is that it takes a hard-coded `studentUniqueId` that matches the test data, generates a token for testing, and redirects to the running web client. To easily view a different test student's data, change the `studentUniqueId` in that API route and hit the redirect route again.
 
 ## Running tests
 
@@ -168,6 +177,7 @@ You should confirm that the following environment variables are set up in the Te
 2. Make sure you've manually copied and updated ontrack.config.json to c:\ontrack-deploy. The ontrack.config.json file should be updated to the correct values for whatever environment you'll be deploying to (e.g., set the correct ODS DB credentials).
 3. Manually upload the artifact.zip file from TeamCity to c:\ontrack-deploy.
 4. Navigate to c:\ontrack-deploy in Powershell, and run .\deploy.ps1
+   - If the script complains about `rh` not being found, make sure you haven't started Powershell as Administrator. Installing the dotnet global tool appears to only add RoundhousE to the user path, not the system path.
 
 #### Set up IIS:
 
