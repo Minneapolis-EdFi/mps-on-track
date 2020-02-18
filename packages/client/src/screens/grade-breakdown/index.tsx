@@ -175,8 +175,8 @@ const StudentCourseCredits: FC<StudentCourseCreditsProps> = observer(
 								{row.isExpanded ? (
 									<button className="expand-btn">-</button>
 								) : (
-									<button className="expand-btn">+</button>
-								)}
+										<button className="expand-btn">+</button>
+									)}
 							</span>
 						);
 					}
@@ -186,7 +186,7 @@ const StudentCourseCredits: FC<StudentCourseCreditsProps> = observer(
 					accessor: 'name'
 				},
 				{
-					Header: 'Counts',
+					Header: 'Earned Credits',
 					accessor: 'CreditsContributedByCourse'
 				},
 				{
@@ -204,7 +204,7 @@ const StudentCourseCredits: FC<StudentCourseCreditsProps> = observer(
 
 		return (
 			<>
-				<h2 className="font-bold text-lg">Courses with Credits Breakdown</h2>
+				<h2 className="font-bold text-lg">Credit Breakdown</h2>
 				<Table columns={columns} data={tableData} />
 			</>
 		);

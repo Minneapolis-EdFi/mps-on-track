@@ -58,7 +58,7 @@ const App: FC = () => {
 				<Tabs>
 					<TabList>
 						<Tab>Grad Path Visualization</Tab>
-						<Tab>Student Grade Breakdown</Tab>
+						<Tab>Student Credit Breakdown</Tab>
 						<Tab>At a Glance</Tab>
 					</TabList>
 
