@@ -194,7 +194,7 @@ export default class StudentService {
 				Courses: courses.map(({ SchoolYearWhenTaken, GradeDetails, Term, ...rest }) => ({
 					...rest,
 					...((SchoolYearWhenTaken === 'N/A' || SchoolYearWhenTaken === null) && {
-						Status: 'Courses Not Taken Yet'
+						Status: 'Not Yet Taken'
 					})
 				}))
 			}));
