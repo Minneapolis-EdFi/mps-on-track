@@ -42,22 +42,23 @@ GO
 CREATE FUNCTION gradCredits.GetStudentChartData 
 	(@StudentId INT)
 RETURNS 
-	@StudentChartData TABLE (StudentUniqueId INT,
-	StudentName NVARCHAR(500),
-	LastGradedGradingPeriod NVARCHAR(10),
-	CurrentGradeLevel NVARCHAR(50),
-	GradRequirement NVARCHAR(50),
-	GradRequirementGroup NVARCHAR(50),
-	EarnedGradCredits DECIMAL(6,3),
-	RemainingCreditsRequiredByLastGradedQuarter DECIMAL(6,3),
-	RemainingCreditsRequiredByEndOfCurrentGradeLevel DECIMAL(6,3),
-	RemainingCreditsRequiredByGraduation DECIMAL(6,3),
-	DifferentialRemainingCreditsRequiredByGraduation DECIMAL(6,3),
-	TotalEarnedCredits DECIMAL(6,3),
-	TotalEarnedGradCredits DECIMAL(6,3),
-	CreditValueRequired DECIMAL(6,3),
-	CreditValueRemaining DECIMAL(6,3),
-	DisplayOrder INT
+	@StudentChartData TABLE (
+							StudentUniqueId INT,
+							StudentName NVARCHAR(500),
+							LastGradedGradingPeriod NVARCHAR(10),
+							CurrentGradeLevel NVARCHAR(50),
+							GradRequirement NVARCHAR(50),
+							GradRequirementGroup NVARCHAR(50),
+							EarnedGradCredits DECIMAL(6,3),
+							RemainingCreditsRequiredByLastGradedQuarter DECIMAL(6,3),
+							RemainingCreditsRequiredByEndOfCurrentGradeLevel DECIMAL(6,3),
+							RemainingCreditsRequiredByGraduation DECIMAL(6,3),
+							DifferentialRemainingCreditsRequiredByGraduation DECIMAL(6,3),
+							TotalEarnedCredits DECIMAL(6,3),
+							TotalEarnedGradCredits DECIMAL(6,3),
+							CreditValueRequired DECIMAL(6,3),
+							CreditValueRemaining DECIMAL(6,3),
+							DisplayOrder INT
 						)
 
 AS
@@ -482,14 +483,15 @@ GO
 CREATE FUNCTION gradCredits.GetStudentData 
 	(@StudentId INT)
 RETURNS 
-	@StudentData TABLE (StudentUniqueId INT,
-	StudentName NVARCHAR(500),
-	GradPathSchoolName NVARCHAR(50),
-	LastGradedQuarter NVARCHAR(50),
-	CurrentGradeLevel NVARCHAR(50),
-	CreditDeficiencyStatus NVARCHAR(50),
-	TotalEarnedCredits DECIMAL(6,3),
-	TotalEarnedGradCredits DECIMAL(6,3)							
+	@StudentData TABLE (
+						StudentUniqueId INT,
+						StudentName NVARCHAR(500),
+						GradPathSchoolName NVARCHAR(50),
+						LastGradedQuarter NVARCHAR(50),
+						CurrentGradeLevel NVARCHAR(50),
+						CreditDeficiencyStatus NVARCHAR(50),
+						TotalEarnedCredits DECIMAL(6,3),
+						TotalEarnedGradCredits DECIMAL(6,3)							
 						)
 
 AS
@@ -498,9 +500,6 @@ AS
 	INSERT INTO @StudentData
 	SELECT StudentUniqueId,
 		CONCAT('[',grs.StudentChartId,'] ', grs.StudentName),
-		grsl.GradRequirementSelector,
-		CONCAT
-('[',grs.StudentChartId,'] ', grs.StudentName),
 		grsl.GradRequirementSelector,
 		(SELECT CONCAT(CAST(MAX(SchoolYear) as varchar(10)),' - ',LastGradedQuarter)
 		FROM gradCredits.GradRequirementStudentCreditGrade cg
