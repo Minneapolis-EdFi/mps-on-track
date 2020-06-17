@@ -45,7 +45,7 @@ RETURNS
 	@StudentChartData TABLE (
 							StudentUniqueId INT,
 							StudentName NVARCHAR(500),
-							LastGradedGradingPeriod NVARCHAR(10),
+							LastGradedGradingPeriod NVARCHAR(20),
 							CurrentGradeLevel NVARCHAR(50),
 							GradRequirement NVARCHAR(50),
 							GradRequirementGroup NVARCHAR(50),
