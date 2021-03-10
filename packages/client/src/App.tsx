@@ -76,13 +76,13 @@ const App: FC = () => {
 				</Tabs>
 			</div>
 
-			{/* {!isProd && !isIE && (
+			{!isProd && !isIE && (
 				<footer className="bg-gray-800 mt-4 px-2">
 					<code className="text-white mr-4">
-						Env: {process.env.APP_ENV} ({process.env.COMMIT_HASH})
+						{/* Env: {process.env.APP_ENV} ({process.env.COMMIT_HASH}) */}
 					</code>
 				</footer>
-			)} */}
+			)}
 		</div>
 	);
 };
