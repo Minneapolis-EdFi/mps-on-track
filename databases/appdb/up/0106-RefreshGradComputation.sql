@@ -48,6 +48,12 @@ BEGIN
 
 		EXEC gradCredits.LoadGrades NULL, NULL
 
+		EXEC gradCredits.UpdateClassOfSchoolYear
+
+		EXEC gradCredits.UpdateDemographicStudentGroup
+
+		EXEC gradCredits.UpdateStudentSelectors
+
 		EXEC gradCredits.LoadCourseSequence NULL
 
 		EXEC gradCredits.LoadGradReference NULL

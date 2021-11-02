@@ -10,7 +10,6 @@ CREATE PROCEDURE gradCredits.ComputeSchoolGradCredits
 	@SchoolId INT
 AS
 
-
 SET NOCOUNT ON
 
 DECLARE
@@ -32,7 +31,7 @@ DECLARE
 	@GradRequirementReferenceId INT,
 	@TotalEarnedCredits DECIMAL(6,3),
 	@CourseSequenceChanged BIT,
-	@ProcName NVARCHAR(100) = 'ComputeSchoolGradCredits',
+	@ProcName NVARCHAR(100) = 'ComputeGradCredits',
 	@ExecStart DATETIME = GETDATE(),
 	@ExecutionLogId INT,
 	@GradRequirementCreditsLogDetailId INT,
@@ -49,15 +48,7 @@ EXEC gradCredits.GetExecutionLogDetailId 'GradRequirementCreditGrades', @Executi
 
 
 DECLARE gc_cursor CURSOR FAST_FORWARD FOR 
-	SELECT GradRequirementStudentId, (COALESCE(
-			(SELECT GradRequirementSelectorId FROM gradCredits.GradRequirementSelector grs
-			 WHERE grs.GradRequirementSchoolId = gr.GradPathSchoolId
-			 AND GradRequirementSelector <> 'DISTRICT' 
-			 AND GradRequirementStudentGroupId IS NULL),
-			(SELECT GradRequirementSelectorId FROM gradCredits.GradRequirementSelector grs
-			 WHERE GradRequirementSchoolId = 272124
-			 AND GradRequirementSelector = 'DISTRICT' 
-			 AND GradRequirementStudentGroupId IS NULL))) GradRequirementSelectorId, CurrentGradeLevelId
+	SELECT GradRequirementStudentId, GradRequirementSelectorId, CurrentGradeLevelId
 	FROM gradCredits.GradRequirementStudent gr
 	WHERE GradPathSchoolId = @SchoolId
  
@@ -317,12 +308,6 @@ SET @LastGradedGradingPeriodId = (COALESCE(
 
 	-- Updates --
 	DECLARE @TotalEarnedGradCredits DECIMAL(10,2) = (SELECT SUM(EarnedGradCredits) FROM #StudentComputedCredits)
-	
-	
-	UPDATE gradCredits.GradRequirementStudent
-	SET GradRequirementSelectorId = @GradRequirementSelectorId
-	WHERE GradRequirementStudentId = @GradRequirementStudentId 
-	
 
 	UPDATE ct
 	SET RemainingCreditsRequiredByLastGradedQuarter = IIF((g.CreditValue - ct.EarnedGradCredits) < 0, 0, (g.CreditValue - ct.EarnedGradCredits)),
@@ -492,12 +477,7 @@ DEALLOCATE gc_cursor
 								from @GradRequirementCreditGradesMerge),
 			RecordsDeleted = COALESCE(RecordsDeleted,0) + (SELECT SUM(CASE WHEN MERGE_ACTION='DELETE' THEN 1 ELSE 0 END)
 								from @GradRequirementCreditGradesMerge)
-		WHERE GradRequirementExecutionLogDetailId = @GradRequirementCreditGradesLogDetailId;
 
-		UPDATE gradCredits.GradRequirementExecutionLog
-		SET ExecutionEnd = GETDATE(),
-			ExecutionStatus = 'Success'
-		WHERE GradRequirementExecutionLogId = @ExecutionLogId
 
 GO
 

@@ -788,27 +788,27 @@ CREATE PROCEDURE gradCredits.GetGradRequirementStudentGroupId
 	@StudentGroup NVARCHAR(100),
 	@StudentGroupId INT OUTPUT
 AS
-IF @StudentGroup IS NOT NULL
-	AND NOT EXISTS
-	(
-		SELECT 1
-	FROM gradCredits.GradRequirementStudentGroup
-	WHERE GradRequirementStudentGroup = @StudentGroup
-	) 
-	BEGIN
-	INSERT INTO gradCredits.GradRequirementStudentGroup
-	SELECT @StudentGroup
+--IF @StudentGroup IS NOT NULL
+--	AND NOT EXISTS
+--	(
+--		SELECT 1
+--	FROM gradCredits.GradRequirementStudentGroup
+--	WHERE GradRequirementStudentGroup = @StudentGroup
+--	) 
+--	BEGIN
+--	INSERT INTO gradCredits.GradRequirementStudentGroup
+--	SELECT @StudentGroup
 
-	UPDATE gradCredits.GradRequirementExecutionLogDetail
-		SET RecordsInserted = ISNULL(RecordsInserted,0) + 1
-		WHERE GradRequirementExecutionLogDetailId = @ExecutionLogDetailId
-		AND GradRequirementExecutionLogId = @ExecutionLogId
-		AND GradRequirementTable = 'GradRequirementStudentGroup'
-END
+--	UPDATE gradCredits.GradRequirementExecutionLogDetail
+--		SET RecordsInserted = ISNULL(RecordsInserted,0) + 1
+--		WHERE GradRequirementExecutionLogDetailId = @ExecutionLogDetailId
+--		AND GradRequirementExecutionLogId = @ExecutionLogId
+--		AND GradRequirementTable = 'GradRequirementStudentGroup'
+--END
 
 SET @StudentGroupId = COALESCE((SELECT GradRequirementStudentGroupId
 		FROM gradCredits.GradRequirementStudentGroup
-		WHERE GradRequirementStudentGroup = @StudentGroup),-1)	
+		WHERE GradRequirementStudentGroupCode = @StudentGroup),-1)
 GO
 
 
@@ -832,7 +832,7 @@ BEGIN
 
 	IF @SchoolId IN (SELECT GradRequirementSchoolId
 		FROM gradCredits.GradRequirementSchool)
-		AND (@StudentGroupId IS NULL OR (@StudentGroupId IN (SELECT GradRequirementStudentGroupId
+		AND ((@StudentGroupId IN (SELECT GradRequirementStudentGroupId
 		FROM gradCredits.GradRequirementStudentGroup)))
 		AND @Selector IN (SELECT GradRequirementSchoolName
 		FROM gradCredits.GradRequirementSchool)
@@ -1839,5 +1839,222 @@ UPDATE gradCredits.GradRequirementExecutionLog
 
 GO
 
+
+
+
+/****	UpdateStudentSelectors	***/
+IF OBJECT_ID('gradCredits.UpdateStudentSelectors', 'P') IS NOT NULL
+    DROP PROCEDURE gradCredits.UpdateStudentSelectors
+GO
+
+CREATE PROCEDURE gradCredits.UpdateStudentSelectors AS
+BEGIN
+
+SET NOCOUNT ON
+	
+	DECLARE 
+		@ProcName NVARCHAR(100) = 'UpdateStudentSelectors',
+		@ExecStart DATETIME = GETDATE(),
+		@ExecutionLogId INT,
+		@LogDetailOutput INT
+
+	EXEC gradCredits.GetExecutionLogId @ProcName, @ExecStart, @ExecutionLogId OUTPUT
+
+	DECLARE @UpdateSQL NVARCHAR(MAX),
+		 @counter INT = 1
+
+	/**	Reset all SelectorIDs in the GradRequirementStudent Table	***/
+	UPDATE gradCredits.GradRequirementStudent
+	SET GradRequirementSelectorId = NULL;
+
+	/*** Define Ordering and build out Update Query Statement for all defined selectors	***/
+	SELECT 
+		ROW_NUMBER() OVER (ORDER BY s.GradRequirementSchoolId, 
+			CASE WHEN CHARINDEX('_DEFAULT', GradRequirementStudentGroupCode) > 0 THEN 1 ELSE 0 END) Ordering,
+		s.GradRequirementSelectorId, 
+		s.GradRequirementSelector, 
+		s.GradRequirementSchoolId,
+		g.GradRequirementStudentGroupCode,
+		g.GradRequirementStudentGroupDefinition,
+		CONCAT('UPDATE gradCredits.GradRequirementStudent
+	SET GradRequirementSelectorId = ', s.GradRequirementSelectorId, '
+	WHERE GradRequirementStudentId IN (', g.GradRequirementStudentGroupDefinition , ');') UpdateStatement
+	INTO #UpdateTable
+	FROM gradCredits.GradRequirementSelector s
+	INNER JOIN gradCredits.GradRequirementStudentGroup g
+		ON s.GradRequirementStudentGroupId = g.GradRequirementStudentGroupId
+	INNER JOIN gradCredits.GradRequirementReference r 
+		ON s.GradRequirementSelectorId = r.GradRequirementSelectorId
+	GROUP BY s.GradRequirementSelectorId, 
+		s.GradRequirementSelector, 
+		s.GradRequirementSchoolId,
+		g.GradRequirementStudentGroupCode,
+		g.GradRequirementStudentGroupDefinition
+
+	WHILE @counter <= (SELECT MAX(Ordering) FROM #UpdateTable)
+	BEGIN
+		SET @UpdateSQL = (SELECT UpdateStatement FROM #UpdateTable WHERE Ordering = @counter)
+
+		BEGIN TRY
+			EXEC gradCredits.GetExecutionLogDetailId 'UpdateStudentSelectors', 
+							@ExecutionLogId, @LogDetailOutput OUTPUT
+
+			EXEC sp_executesql @UpdateSQL
+		END TRY
+
+		BEGIN CATCH
+
+			DECLARE @ErrorMessage NVARCHAR(255) = ERROR_MESSAGE()
+			EXEC gradCredits.LogAudit @LogDetailOutput, @ErrorMessage
+
+		END CATCH
+		SET @counter = @counter + 1
+	END
+
+	DROP TABLE #UpdateTable
+
+	SET NOCOUNT OFF
+
+END
+
+
+/****	UpdateClassOfSchoolYear	***/
+IF OBJECT_ID('gradCredits.UpdateClassOfSchoolYear', 'P') IS NOT NULL
+    DROP PROCEDURE gradCredits.UpdateClassOfSchoolYear
+GO
+
+CREATE PROCEDURE gradCredits.UpdateClassOfSchoolYear AS
+BEGIN
+
+SET NOCOUNT ON
+
+UPDATE gs
+SET ClassOfSchoolYear = cosy.ClassOfSchoolYear
+FROM gradCredits.GradRequirementStudent gs
+INNER JOIN
+(SELECT s.GradRequirementStudentId, l.GradRequirementGradeLevel,
+	CASE GradRequirementGradeLevel 
+		WHEN 9 THEN SchoolYear + 3
+		WHEN 10 THEN SchoolYear + 2
+		WHEN 11 THEN SchoolYear + 1
+		WHEN 12 THEN SchoolYear END ClassOfSchoolYear
+FROM gradCredits.GradRequirementStudent s
+JOIN gradCredits.GradRequirementGradeLevel l on s.CurrentGradeLevelId = l.GradRequirementGradeLevelId
+OUTER APPLY 
+	(SELECT SchoolYear FROM gradCredits.GradRequirementSchoolYear WHERE CurrentSchoolYearIndicator = 1) sc
+) cosy on gs.GradRequirementStudentId = cosy.GradRequirementStudentId
+
+END
+GO
+
+
+/****	CreateStudentSelectorGroup	***/
+IF OBJECT_ID('gradCredits.CreateStudentSelectorGroup', 'P') IS NOT NULL
+    DROP PROCEDURE gradCredits.CreateStudentSelectorGroup
+GO
+
+CREATE PROCEDURE gradCredits.CreateStudentSelectorGroup 
+	@StudentGroup NVARCHAR(100),
+	@StudentGroupCode NVARCHAR(50),
+	@StudentGroupDefinition NVARCHAR(MAX)
+AS
+BEGIN
+/*** Example Usage
+EXEC gradCredits.CreateStudentSelectorGroup
+	@StudentGroup = 'Class of 2025 and Beyond Students Southwest High',
+	@StudentGroupCode = 'SOUTHWEST_HIGH_COSY2025',
+	@StudentGroupDefinition = 
+'SELECT GradRequirementStudentId
+FROM gradCredits.GradRequirementStudent 
+WHERE GradRequirementSelectorId IS NULL
+AND ClassOfSchoolYear >= 2025
+AND GradPathSchoolId = 364'
+
+**/
+SET NOCOUNT ON
+
+MERGE INTO gradCredits.GradRequirementStudentGroup AS TARGET
+USING (SELECT @StudentGroup StudentGroup, @StudentGroupCode StudentGroupCode , @StudentGroupDefinition StudentGroupDefinition) AS SOURCE
+ON TARGET.GradRequirementStudentGroup = SOURCE.StudentGroup
+WHEN MATCHED AND 
+	TARGET.GradRequirementStudentGroupCode <> SOURCE.StudentGroupCode
+	OR TARGET.GradRequirementStudentGroupDefinition <> SOURCE.StudentGroupDefinition
+THEN UPDATE SET
+	TARGET.GradRequirementStudentGroupCode = SOURCE.StudentGroupCode,
+	TARGET.GradRequirementStudentGroupDefinition = SOURCE.StudentGroupDefinition
+WHEN NOT MATCHED THEN 
+	INSERT (GradRequirementStudentGroup, GradRequirementStudentGroupCode, GradRequirementStudentGroupDefinition)
+	VALUES (StudentGroup, StudentGroupCode, StudentGroupDefinition)
+;
+
+END
+
+GO
+
+
+
+/****	CreateStudentSelectorGroup	***/
+IF OBJECT_ID('gradCredits.UpdateDemographicStudentGroup', 'P') IS NOT NULL
+    DROP PROCEDURE gradCredits.UpdateDemographicStudentGroup
+GO
+
+CREATE PROCEDURE gradCredits.UpdateDemographicStudentGroup 
+AS
+BEGIN
+/*** Example Usage
+To update this script, add the demographic/student combo to the INSERT INTO @dgroup section
+use a UNION ALL statement to combine groups
+For eg. add the following after the 
+
+	UNION ALL
+	SELECT 'XX', 'A sample group', 1223455 as GradRequirementStudentId
+
+**/
+SET NOCOUNT ON
+
+DECLARE @dgroup TABLE (GroupCode NVARCHAR(50), GroupDescription NVARCHAR(255), GradRequirementStudentId INT)
+
+INSERT INTO @dgroup
+--This section adds a group of all SPED students district-wide
+SELECT 'SPED_DISTRICTWIDE' GroupCode, 'All Special Education Students Districtwide' GroupDescription, gs.GradRequirementStudentId
+FROM Mnpls3_EdFi_Ods_2022.edfi.StudentSpecialEducationProgramAssociation sp
+INNER JOIN Mnpls3_EdFi_Ods_2022.edfi.Student s on sp.StudentUSI = s.StudentUSI
+INNER JOIN gradCredits.GradRequirementStudent gs ON s.StudentUniqueId = gs.StudentUniqueId
+
+
+MERGE INTO gradCredits.GradRequirementDemographicGroup AS TARGET
+USING (SELECT DISTINCT GroupCode, GroupDescription FROM @dgroup) AS SOURCE
+ON TARGET.DemographicGroupCode = SOURCE.GroupCode
+WHEN MATCHED AND 
+	TARGET.DemographicGroupDescription <> SOURCE.GroupDescription
+THEN UPDATE SET
+	TARGET.DemographicGroupDescription = SOURCE.GroupDescription
+WHEN NOT MATCHED THEN 
+	INSERT (DemographicGroupCode, DemographicGroupDescription)
+	VALUES (GroupCode, GroupDescription)
+;
+
+
+MERGE INTO gradCredits.GradRequirementDemographicStudentGroup AS TARGET
+USING (SELECT DISTINCT gp.DemographicId, g.GradRequirementStudentId 
+		FROM @dgroup g
+		INNER JOIN gradCredits.GradRequirementDemographicGroup gp 
+		ON g.GroupCode = gp.DemographicGroupCode 
+		INNER JOIN gradCredits.GradRequirementStudent gs
+		ON g.GradRequirementStudentId = gs.GradRequirementStudentId) AS SOURCE
+ON TARGET.DemographicId = SOURCE.DemographicId
+AND TARGET.GradRequirementStudentId = SOURCE.GradRequirementStudentId
+WHEN NOT MATCHED THEN 
+	INSERT (DemographicId, GradRequirementStudentId)
+	VALUES (DemographicId, GradRequirementStudentId)
+WHEN NOT MATCHED BY SOURCE
+	THEN DELETE
+;
+
+SET NOCOUNT OFF
+
+END
+
+GO
 
 

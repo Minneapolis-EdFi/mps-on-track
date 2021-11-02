@@ -30,7 +30,7 @@ DECLARE
 	@GradRequirementReferenceId INT,
 	@TotalEarnedCredits DECIMAL(6,3),
 	@CourseSequenceChanged BIT,
-	@ProcName NVARCHAR(100) = 'ComputeStudentGradCredits',
+	@ProcName NVARCHAR(100) = 'ComputeGradCredits',
 	@ExecStart DATETIME = GETDATE(),
 	@ExecutionLogId INT,
 	@GradRequirementCreditsLogDetailId INT,
@@ -47,18 +47,9 @@ EXEC gradCredits.GetExecutionLogDetailId 'GradRequirementCreditGrades', @Executi
 
 
 DECLARE gc_cursor CURSOR FAST_FORWARD FOR 
-	SELECT GradRequirementStudentId, (COALESCE(
-			(SELECT GradRequirementSelectorId FROM gradCredits.GradRequirementSelector grs
-			 WHERE grs.GradRequirementSchoolId = gr.GradPathSchoolId
-			 AND GradRequirementSelector <> 'DISTRICT' 
-			 AND GradRequirementStudentGroupId IS NULL),
-			(SELECT GradRequirementSelectorId FROM gradCredits.GradRequirementSelector grs
-			 WHERE GradRequirementSchoolId = 272124
-			 AND GradRequirementSelector = 'DISTRICT' 
-			 AND GradRequirementStudentGroupId IS NULL))) GradRequirementSelectorId, CurrentGradeLevelId
+	SELECT GradRequirementStudentId, GradRequirementSelectorId, CurrentGradeLevelId
 	FROM gradCredits.GradRequirementStudent gr
 	WHERE StudentChartId = @StudentChartId
-
  
 OPEN gc_cursor
 FETCH NEXT FROM gc_cursor
@@ -109,7 +100,7 @@ BEGIN
 
 
 		--get last graded quarter of student.
-	SET @LastGradedGradingPeriodId = (COALESCE(
+SET @LastGradedGradingPeriodId = (COALESCE(
 		(SELECT DISTINCT grgp.GradRequirementGradingPeriodId 
 		FROM gradCredits.GradRequirementStudentGrade grsg
 		INNER JOIN gradCredits.GradRequirementStudentSchoolAssociation grssa
@@ -203,7 +194,7 @@ BEGIN
 				IF @PhysicsOrChemGradReqId IS NOT NULL 
 					AND @CurrentGradRequirementId IN (@PhysicsGradReqId, @ChemGradReqId)
 						SET @CurrentGradRequirementId = @PhysicsOrChemGradReqId
-				
+
 				IF @PhysicsOrChemGradReqId IS NULL
 					AND @CurrentGradRequirementId = @ChemOrPhysicsGradReqId 
 				BEGIN
@@ -230,7 +221,7 @@ BEGIN
 						SET @CurrentGradRequirementId = @PhysicsGradReqId 
 
 				END
-
+				
 				SET @requiredCreditValue = (SELECT CreditValue 
 											FROM gradCredits.GradRequirementReference g		
 											INNER JOIN gradCredits.GradRequirementGradeLevel gl 
@@ -286,19 +277,20 @@ BEGIN
 
 									SET @cummulativeCredit = @newValue - @requiredCreditValue 
 
+									
 								END
 							ELSE
 								BEGIN
 									UPDATE #StudentComputedCredits SET EarnedGradCredits = @newValue
 									WHERE GradRequirementId = @CurrentGradRequirementId
 
-								IF (@earnedGradCreditValue <> @requiredCreditValue)
-									INSERT INTO #StudentComputedCreditGrades
-									SELECT @GradRequirementStudentId, @CurrentGradRequirementId, @GradRequirementStudentGradeId, @EarnedCredits
+									IF (@earnedGradCreditValue <> @requiredCreditValue)
+										INSERT INTO #StudentComputedCreditGrades
+										SELECT @GradRequirementStudentId, @CurrentGradRequirementId, @GradRequirementStudentGradeId, @EarnedCredits
 
 									break
 								END
-						END
+						END						
 					END
 				SET @gradCounter += 1
 
@@ -315,12 +307,6 @@ BEGIN
 
 	-- Updates --
 	DECLARE @TotalEarnedGradCredits DECIMAL(10,2) = (SELECT SUM(EarnedGradCredits) FROM #StudentComputedCredits)
-	
-	
-	UPDATE gradCredits.GradRequirementStudent
-	SET GradRequirementSelectorId = @GradRequirementSelectorId
-	WHERE GradRequirementStudentId = @GradRequirementStudentId 
-	
 
 	UPDATE ct
 	SET RemainingCreditsRequiredByLastGradedQuarter = IIF((g.CreditValue - ct.EarnedGradCredits) < 0, 0, (g.CreditValue - ct.EarnedGradCredits)),
@@ -490,10 +476,6 @@ DEALLOCATE gc_cursor
 								from @GradRequirementCreditGradesMerge),
 			RecordsDeleted = COALESCE(RecordsDeleted,0) + (SELECT SUM(CASE WHEN MERGE_ACTION='DELETE' THEN 1 ELSE 0 END)
 								from @GradRequirementCreditGradesMerge)
-		WHERE GradRequirementExecutionLogDetailId = @GradRequirementCreditGradesLogDetailId;
 
-		UPDATE gradCredits.GradRequirementExecutionLog
-		SET ExecutionEnd = GETDATE(),
-			ExecutionStatus = 'Success'
-		WHERE GradRequirementExecutionLogId = @ExecutionLogId
+
 GO

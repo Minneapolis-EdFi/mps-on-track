@@ -24,6 +24,17 @@ IF OBJECT_ID('gradCredits.GradRequirementStudentSchoolAssociation',N'U') IS NOT 
 	DROP TABLE gradCredits.GradRequirementStudentSchoolAssociation
 GO
 
+
+IF OBJECT_ID('gradCredits.gradCredits.GradRequirementDemographicStudentGroup',N'U') IS NOT NULL
+	DROP TABLE gradCredits.gradCredits.GradRequirementDemographicStudentGroup
+GO
+
+
+IF OBJECT_ID('gradCredits.GradRequirementDemographicGroup',N'U') IS NOT NULL
+	DROP TABLE gradCredits.GradRequirementDemographicGroup
+GO
+
+
 IF OBJECT_ID('gradCredits.GradRequirementStudent',N'U') IS NOT NULL
 	DROP TABLE gradCredits.GradRequirementStudent
 GO
@@ -61,8 +72,6 @@ GO
 IF OBJECT_ID('gradCredits.GradRequirementGradeLevel',N'U') IS NOT NULL
 	DROP TABLE gradCredits.GradRequirementGradeLevel
 GO
-
-
 
 IF OBJECT_ID('gradCredits.GradRequirement',N'U') IS NOT NULL
 	DROP TABLE gradCredits.GradRequirement
@@ -133,7 +142,9 @@ CREATE TABLE gradCredits.GradRequirementGradingPeriod
 CREATE TABLE gradCredits.GradRequirementStudentGroup
 (
 	GradRequirementStudentGroupId INT IDENTITY(1,1),
+	GradRequirementStudentGroupCode NVARCHAR(50) NOT NULL,
 	GradRequirementStudentGroup NVARCHAR(100) NOT NULL,
+	GradRequirementStudentGroupDefinition NVARCHAR(MAX) NOT NULL,
 	CONSTRAINT PK_GRAD_REQ_STDGRP PRIMARY KEY (GradRequirementStudentGroupId),
 	CONSTRAINT UX_GRAD_REQ_STDGRP UNIQUE (GradRequirementStudentGroup)
 )
@@ -153,7 +164,7 @@ CREATE TABLE gradCredits.GradRequirementSelector
 	GradRequirementSelectorId INT IDENTITY(1,1),
 	GradRequirementSelector NVARCHAR(50) NOT NULL,
 	GradRequirementSchoolId INT NOT NULL,
-	GradRequirementStudentGroupId INT NULL,
+	GradRequirementStudentGroupId INT NOT NULL,
 	CONSTRAINT PK_GRAD_SEL_GP PRIMARY KEY (GradRequirementSelectorId),
 	CONSTRAINT UX_GRAD_SEL_GP UNIQUE (GradRequirementSelector,GradRequirementSchoolId,GradRequirementStudentGroupId),
 	CONSTRAINT FK_GRAD_SEL_SCH FOREIGN KEY (GradRequirementSchoolId) 
@@ -233,6 +244,7 @@ CREATE TABLE gradCredits.GradRequirementStudent
 	StudentName NVARCHAR(255) NOT NULL,
 	GradPathSchoolId INT NULL,
 	CurrentGradeLevelId INT NULL,
+	ClassOfSchoolYear SMALLINT NULL,
 	GradRequirementSelectorId INT NULL,
 	CONSTRAINT PK_GRAD_REQ_STD PRIMARY KEY (GradRequirementStudentId),
 	CONSTRAINT UX_GRAD_REQ_STD UNIQUE (StudentUniqueId),
@@ -272,6 +284,24 @@ CREATE TABLE gradCredits.GradRequirementStudentSchoolAssociation
 	CONSTRAINT FK_GRADREQ_SCHID FOREIGN KEY (GradRequirementSchoolId) REFERENCES gradCredits.GradRequirementSchool(GradRequirementSchoolId)
 	ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT FK_GRADREQ_GLID FOREIGN KEY (GradRequirementGradeLevelId) REFERENCES gradCredits.GradRequirementGradeLevel(GradRequirementGradeLevelId)
+)
+GO
+
+
+CREATE TABLE gradCredits.GradRequirementDemographicGroup(
+	DemographicId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+	DemographicGroupCode NVARCHAR(50) NOT NULL UNIQUE,
+	DemographicGroupDescription NVARCHAR(255) NULL
+)
+GO
+
+
+CREATE TABLE gradCredits.GradRequirementDemographicStudentGroup(
+	DemographicId INT NOT NULL,
+	GradRequirementStudentId INT NOT NULL,
+	CONSTRAINT fk_GradReqStudentGroup_DemGroup FOREIGN KEY (DemographicId) REFERENCES gradCredits.GradRequirementDemographicGroup(DemographicId),
+	CONSTRAINT fk_GradReqStudentGroup_Student FOREIGN KEY (GradRequirementStudentId) REFERENCES gradCredits.GradRequirementStudent(GradRequirementStudentId),
+	CONSTRAINT pk_GradRequirementDemographicStudentGroup PRIMARY KEY (DemographicId, GradRequirementStudentId)
 )
 GO
 
