@@ -1413,6 +1413,11 @@ EXEC gradCredits.GetExecutionLogId @ProcName, @ExecStart, @ExecutionLogId OUTPUT
 IF @FILE_NAME IS NULL 
 		SET @FILE_NAME = 'C:\GraduationCreditsImplementation\CourseSequenceTemplate.csv'
 
+UPDATE gradCredits.GradRequirementStudentGrade
+SET GradRequirementCourseSequenceId = NULL
+
+DELETE FROM gradCredits.GradRequirementCourseSequence
+EXEC sp_executesql N'DBCC CHECKIDENT(''gradCredits.GradRequirementCourseSequence'', RESEED, 0);'
 
 IF OBJECT_ID('tempdb..#CourseSequenceTemplate',N'U') IS NOT NULL
 		DROP TABLE #CourseSequenceTemplate
@@ -1430,7 +1435,9 @@ CREATE TABLE #CourseSequenceTemplate
 	FirstSequenceGradRequirement nvarchar(100),
 	SecondSequenceGradRequirement nvarchar(100),
 	ThirdSequenceGradRequirement nvarchar(100),
-	FourthSequenceGradRequirement nvarchar(100)
+	FourthSequenceGradRequirement nvarchar(100),
+	Selector nvarchar(100),
+	StudentGroup nvarchar(100)
 )
 
 DECLARE 
@@ -1452,10 +1459,14 @@ DECLARE
 		@SecondSequenceGradRequirement nvarchar(100), 
 		@ThirdSequenceGradRequirement nvarchar(100),
 		@FourthSequenceGradRequirement nvarchar(100),
+		@Selector nvarchar(100),
+		@StudentGroup nvarchar(100),
+		@GradRequirementSelectorId int,
 		@ErrorCount int,
 		@ErrorMessage nvarchar(500) = '',
 		@CourseSequenceDId int,
 		@GradRequirementDepartmentLDId int,
+		@GradRequirementSelectorDId int,
 		@SpecificGradRequirementDetailId int,
 		@FirstSequenceGradRequirementDId int,
 		@SecondSequenceGradRequirementDId int,
@@ -1478,11 +1489,14 @@ DECLARE
 EXEC (@BulkInsertRefQuery);
 
 DECLARE cf_cursor CURSOR STATIC FOR
-		SELECT CourseCode, CourseTitle, SchoolYear, Duration, Department, CreditValue, SpecificGradRequirement,
-	FirstSequenceGradRequirement, SecondSequenceGradRequirement, ThirdSequenceGradRequirement, FourthSequenceGradRequirement
+		SELECT 
+			CourseCode, CourseTitle, SchoolYear, Duration, Department, CreditValue, SpecificGradRequirement,
+			FirstSequenceGradRequirement, SecondSequenceGradRequirement, ThirdSequenceGradRequirement, 
+			FourthSequenceGradRequirement, Selector, StudentGroup
 FROM #CourseSequenceTemplate
-GROUP BY  CourseCode, CourseTitle, SchoolYear, Duration, Department, CreditValue, SpecificGradRequirement, 
-			FirstSequenceGradRequirement, SecondSequenceGradRequirement, ThirdSequenceGradRequirement, FourthSequenceGradRequirement
+GROUP BY CourseCode, CourseTitle, SchoolYear, Duration, Department, CreditValue, SpecificGradRequirement,
+			FirstSequenceGradRequirement, SecondSequenceGradRequirement, ThirdSequenceGradRequirement, 
+			FourthSequenceGradRequirement, Selector, StudentGroup
 
 OPEN cf_cursor
 FETCH NEXT FROM cf_cursor
@@ -1496,19 +1510,56 @@ FETCH NEXT FROM cf_cursor
 		@FirstSequenceGradRequirement, 
 		@SecondSequenceGradRequirement, 
 		@ThirdSequenceGradRequirement,
-		@FourthSequenceGradRequirement
+		@FourthSequenceGradRequirement,
+		@Selector,
+		@StudentGroup
 
 WHILE @@FETCH_STATUS = 0
 		BEGIN
 
+	/** Validation for GradRequirementSelector  **/
+	BEGIN TRY
+		BEGIN
+			EXEC gradCredits.GetExecutionLogDetailId 'GradRequirementSelector', @ExecutionLogId,
+				@GradRequirementSelectorDId OUTPUT
+		
+			SET @GradRequirementSelectorId = COALESCE((SELECT GradRequirementSelectorId
+											FROM gradCredits.GradRequirementSelector gs
+											INNER JOIN gradCredits.GradRequirementStudentGroup gsg
+												ON gs.GradRequirementStudentGroupId = gsg.GradRequirementStudentGroupId
+											WHERE GradRequirementStudentGroupCode = @StudentGroup
+											AND GradRequirementSelector = @Selector),-1)
+
+			IF @GradRequirementSelectorId = -1				
+				BEGIN
+					SET @ErrorMessage = CONCAT('Validation for GradRequirementSelector failed: ', ERROR_MESSAGE(),
+									', ', @CourseCode, ' - ', @CourseTitle, ' - ', @SchoolYear, 'Selector: ',
+									COALESCE(@Selector,'NULL'), '; StudentGroup: ', COALESCE(@StudentGroup, 'NULL'))
+
+					EXEC gradCredits.LogAudit @GradRequirementSelectorDId, @ErrorMessage
+
+					SET @RecordsAuditedCount = @RecordsAuditedCount + 1
+				END
+		END
+	END TRY
+
+	BEGIN CATCH
+		SET @ErrorMessage = CONCAT('Validation for GradRequirementSelector failed: ', ERROR_MESSAGE(),
+						', ', @CourseCode, ' - ', @CourseTitle, ' - ', @SchoolYear, 'Selector: ',
+						COALESCE(@Selector,'NULL'), '; StudentGroup: ', COALESCE(@StudentGroup, 'NULL'))
+
+		EXEC gradCredits.LogAudit @GradRequirementSelectorDId, @ErrorMessage
+		SET @RecordsAuditedCount = @RecordsAuditedCount + 1
+	END CATCH
+
 	/** Validation for GradRequirementDepartment  **/
 	BEGIN TRY
-				EXEC gradCredits.GetExecutionLogDetailId 'GradRequirementDepartment', @ExecutionLogId,
-					@GradRequirementDepartmentLDId OUTPUT
+		EXEC gradCredits.GetExecutionLogDetailId 'GradRequirementDepartment', @ExecutionLogId,
+			@GradRequirementDepartmentLDId OUTPUT
 					
-				IF @Department IS NULL
-					SET @DepartmentId = NULL
-				ELSE BEGIN
+		IF @Department IS NULL
+			SET @DepartmentId = NULL
+		ELSE BEGIN
 		EXEC gradCredits.GetGradRequirementDepartmentId 
 						@ExecutionLogId, @GradRequirementDepartmentLDId, @Department,  @DepartmentId OUTPUT
 
@@ -1723,13 +1774,13 @@ WHILE @@FETCH_STATUS = 0
 
 		SELECT @GradRequirementCourseSequenceId = GradRequirementCourseSequenceId
 		FROM gradCredits.GradRequirementCourseSequence
-		WHERE CourseCode = @CourseCode AND SchoolYear = @SchoolYear
+		WHERE CourseCode = @CourseCode AND SchoolYear = @SchoolYear AND GradRequirementSelectorId = @GradRequirementSelectorId
 
 		IF @@ROWCOUNT = 0 BEGIN
 
 			INSERT INTO gradCredits.GradRequirementCourseSequence
 			SELECT @CourseCode, @CourseTitle, @SchoolYear, @Duration, @DepartmentId, @CreditValue,
-				@SpecificGradReqId, @FirstGradReqId, @SecondGradReqId, @ThirdGradReqId, @FourthGradReqId
+				@SpecificGradReqId, @FirstGradReqId, @SecondGradReqId, @ThirdGradReqId, @FourthGradReqId, @GradRequirementSelectorId
 
 			SET @CourseSeqInsertCount = @CourseSeqInsertCount + 1
 
@@ -1743,7 +1794,8 @@ WHILE @@FETCH_STATUS = 0
 							FirstSequenceGradRequirementId = @FirstGradReqId,
 							SecondSequenceGradRequirementId = @SecondGradReqId,
 							ThirdSequenceGradRequirementId = @ThirdGradReqId,
-							FourthSequenceGradRequirementId = @FourthGradReqId
+							FourthSequenceGradRequirementId = @FourthGradReqId,
+							GradRequirementSelectorId = @GradRequirementSelectorId
 						WHERE GradRequirementCourseSequenceId = @GradRequirementCourseSequenceId
 				AND
 				(
@@ -1764,6 +1816,8 @@ WHILE @@FETCH_STATUS = 0
 				COALESCE(ThirdSequenceGradRequirementId,-9999) <> COALESCE(@ThirdGradReqId,-9999)
 				OR
 				COALESCE(FourthSequenceGradRequirementId,-9999) <> COALESCE(@FourthGradReqId,-9999)
+				OR
+				COALESCE(GradRequirementSelectorId,-9999) <> COALESCE(@GradRequirementSelectorId,-9999)
 								)
 			SET @CourseSeqUpdateCount = @CourseSeqUpdateCount + 1
 		END ELSE IF @@ROWCOUNT > 1 BEGIN
@@ -1796,7 +1850,9 @@ WHILE @@FETCH_STATUS = 0
 				@FirstSequenceGradRequirement, 
 				@SecondSequenceGradRequirement, 
 				@ThirdSequenceGradRequirement,
-				@FourthSequenceGradRequirement
+				@FourthSequenceGradRequirement,
+				@Selector,
+				@StudentGroup
 END
 CLOSE cf_cursor
 DEALLOCATE cf_cursor
@@ -1811,21 +1867,54 @@ UPDATE gradCredits.GradRequirementExecutionLogDetail
 EXEC gradCredits.GetExecutionLogDetailId 'GradRequirementStudentGrade', 
 			@ExecutionLogId, @StudentGradeLogDetailId OUTPUT
 
+/***	Apply District Default Selectors first	***/
 UPDATE grsg
-	SET GradRequirementCourseSequenceId = grcs.GradRequirementCourseSequenceId
-	FROM gradCredits.GradRequirementStudentGrade grsg
-	INNER JOIN gradCredits.GradRequirementStudentSchoolAssociation ssa
-	ON ssa.GradRequirementStudentSchoolAssociationId = grsg.GradRequirementStudentSchoolAssociationId
-	LEFT JOIN gradCredits.GradRequirementCourseSequence grcs
-	ON SUBSTRING(grsg.DisplayCourseCode, 1,(IIF(CHARINDEX('Q',grsg.DisplayCourseCode) > 0, 
-		CHARINDEX('Q',grsg.DisplayCourseCode)-1,LEN(grsg.DisplayCourseCode)))) = grcs.CourseCode
-		AND grcs.SchoolYear = ssa.SchoolYear
-	WHERE 
-		SUBSTRING(grsg.DisplayCourseCode, 1,(IIF(CHARINDEX('Q',grsg.DisplayCourseCode) > 0, 
-		CHARINDEX('Q',grsg.DisplayCourseCode)-1,LEN(grsg.DisplayCourseCode)))) = grcs.CourseCode
+SET GradRequirementCourseSequenceId = grcs.GradRequirementCourseSequenceId
+FROM gradCredits.GradRequirementStudentGrade grsg
+INNER JOIN gradCredits.GradRequirementStudentSchoolAssociation ssa
+ON ssa.GradRequirementStudentSchoolAssociationId = grsg.GradRequirementStudentSchoolAssociationId
+LEFT JOIN gradCredits.GradRequirementCourseSequence grcs
+ON SUBSTRING(grsg.DisplayCourseCode, 1,(IIF(CHARINDEX('Q',grsg.DisplayCourseCode) > 0, 
+	CHARINDEX('Q',grsg.DisplayCourseCode)-1,LEN(grsg.DisplayCourseCode)))) = grcs.CourseCode
 	AND grcs.SchoolYear = ssa.SchoolYear
+	AND grcs.GradRequirementSelectorId = 
+		(
+			SELECT GradRequirementSelectorId
+			FROM gradCredits.GradRequirementSelector gs
+			INNER JOIN gradCredits.GradRequirementStudentGroup gsg 
+				ON gs.GradRequirementStudentGroupId = gsg.GradRequirementStudentGroupId
+			WHERE GradRequirementSelector = 'DISTRICT' 
+			AND GradRequirementStudentGroupCode = 'DISTRICT_DEFAULT'
+		)
+WHERE 
+	SUBSTRING(grsg.DisplayCourseCode, 1,(IIF(CHARINDEX('Q',grsg.DisplayCourseCode) > 0, 
+	CHARINDEX('Q',grsg.DisplayCourseCode)-1,LEN(grsg.DisplayCourseCode)))) = grcs.CourseCode
+AND grcs.SchoolYear = ssa.SchoolYear
+
 
 SET @UpdatedStudentGradesCount = @@ROWCOUNT
+
+
+/***	Apply any other defined Selectors last	***/
+UPDATE grsg
+SET GradRequirementCourseSequenceId = grcs.GradRequirementCourseSequenceId
+FROM gradCredits.GradRequirementStudentGrade grsg
+INNER JOIN gradCredits.GradRequirementStudentSchoolAssociation ssa
+ON ssa.GradRequirementStudentSchoolAssociationId = grsg.GradRequirementStudentSchoolAssociationId
+INNER JOIN gradCredits.GradRequirementStudent grs 
+ON grsg.GradRequirementStudentId = grs.GradRequirementStudentId 
+LEFT JOIN gradCredits.GradRequirementCourseSequence grcs
+ON SUBSTRING(grsg.DisplayCourseCode, 1,(IIF(CHARINDEX('Q',grsg.DisplayCourseCode) > 0, 
+	CHARINDEX('Q',grsg.DisplayCourseCode)-1,LEN(grsg.DisplayCourseCode)))) = grcs.CourseCode
+	AND grcs.SchoolYear = ssa.SchoolYear
+	AND grs.GradRequirementSelectorId = grcs.GradRequirementSelectorId
+WHERE 
+	SUBSTRING(grsg.DisplayCourseCode, 1,(IIF(CHARINDEX('Q',grsg.DisplayCourseCode) > 0, 
+	CHARINDEX('Q',grsg.DisplayCourseCode)-1,LEN(grsg.DisplayCourseCode)))) = grcs.CourseCode
+	AND grcs.SchoolYear = ssa.SchoolYear
+
+
+SET @UpdatedStudentGradesCount = @UpdatedStudentGradesCount + @@ROWCOUNT
 
 UPDATE gradCredits.GradRequirementExecutionLogDetail
 	SET RecordsUpdated = @UpdatedStudentGradesCount
@@ -1869,8 +1958,7 @@ SET NOCOUNT ON
 
 	/*** Define Ordering and build out Update Query Statement for all defined selectors	***/
 	SELECT 
-		ROW_NUMBER() OVER (ORDER BY s.GradRequirementSchoolId, 
-			CASE WHEN CHARINDEX('_DEFAULT', GradRequirementStudentGroupCode) > 0 THEN 1 ELSE 0 END) Ordering,
+		ROW_NUMBER() OVER (ORDER BY g.OrderOfPriority) Ordering,OrderOfPriority,
 		s.GradRequirementSelectorId, 
 		s.GradRequirementSelector, 
 		s.GradRequirementSchoolId,
@@ -1889,7 +1977,8 @@ SET NOCOUNT ON
 		s.GradRequirementSelector, 
 		s.GradRequirementSchoolId,
 		g.GradRequirementStudentGroupCode,
-		g.GradRequirementStudentGroupDefinition
+		g.GradRequirementStudentGroupDefinition,
+		g.OrderOfPriority
 
 	WHILE @counter <= (SELECT MAX(Ordering) FROM #UpdateTable)
 	BEGIN
@@ -1916,7 +2005,7 @@ SET NOCOUNT ON
 	SET NOCOUNT OFF
 
 END
-
+GO
 
 /****	UpdateClassOfSchoolYear	***/
 IF OBJECT_ID('gradCredits.UpdateClassOfSchoolYear', 'P') IS NOT NULL
@@ -1946,51 +2035,6 @@ OUTER APPLY
 
 END
 GO
-
-
-/****	CreateStudentSelectorGroup	***/
-IF OBJECT_ID('gradCredits.CreateStudentSelectorGroup', 'P') IS NOT NULL
-    DROP PROCEDURE gradCredits.CreateStudentSelectorGroup
-GO
-
-CREATE PROCEDURE gradCredits.CreateStudentSelectorGroup 
-	@StudentGroup NVARCHAR(100),
-	@StudentGroupCode NVARCHAR(50),
-	@StudentGroupDefinition NVARCHAR(MAX)
-AS
-BEGIN
-/*** Example Usage
-EXEC gradCredits.CreateStudentSelectorGroup
-	@StudentGroup = 'Class of 2025 and Beyond Students Southwest High',
-	@StudentGroupCode = 'SOUTHWEST_HIGH_COSY2025',
-	@StudentGroupDefinition = 
-'SELECT GradRequirementStudentId
-FROM gradCredits.GradRequirementStudent 
-WHERE GradRequirementSelectorId IS NULL
-AND ClassOfSchoolYear >= 2025
-AND GradPathSchoolId = 364'
-
-**/
-SET NOCOUNT ON
-
-MERGE INTO gradCredits.GradRequirementStudentGroup AS TARGET
-USING (SELECT @StudentGroup StudentGroup, @StudentGroupCode StudentGroupCode , @StudentGroupDefinition StudentGroupDefinition) AS SOURCE
-ON TARGET.GradRequirementStudentGroup = SOURCE.StudentGroup
-WHEN MATCHED AND 
-	TARGET.GradRequirementStudentGroupCode <> SOURCE.StudentGroupCode
-	OR TARGET.GradRequirementStudentGroupDefinition <> SOURCE.StudentGroupDefinition
-THEN UPDATE SET
-	TARGET.GradRequirementStudentGroupCode = SOURCE.StudentGroupCode,
-	TARGET.GradRequirementStudentGroupDefinition = SOURCE.StudentGroupDefinition
-WHEN NOT MATCHED THEN 
-	INSERT (GradRequirementStudentGroup, GradRequirementStudentGroupCode, GradRequirementStudentGroupDefinition)
-	VALUES (StudentGroup, StudentGroupCode, StudentGroupDefinition)
-;
-
-END
-
-GO
-
 
 
 /****	CreateStudentSelectorGroup	***/
@@ -2058,3 +2102,97 @@ END
 GO
 
 
+/****	UpdateSelectorStudentGroup	***/
+IF OBJECT_ID('gradCredits.UpdateSelectorStudentGroup', 'P') IS NOT NULL
+    DROP PROCEDURE gradCredits.UpdateSelectorStudentGroup
+GO
+
+CREATE PROCEDURE gradCredits.UpdateSelectorStudentGroup 
+AS
+BEGIN
+/*** Example Usage
+To update this script, add the demographic/student combo to the INSERT INTO @GroupDef section
+use a UNION ALL statement to combine groups
+
+**/
+SET NOCOUNT ON
+
+DECLARE @GroupDef TABLE (
+	GradRequirementStudentGroupCode NVARCHAR(50) NOT NULL,
+	GradRequirementStudentGroup NVARCHAR(100) NOT NULL,
+	GradRequirementStudentGroupDefinition NVARCHAR(MAX) NOT NULL,
+	OrderOfPriority INT NOT NULL
+)
+
+
+INSERT INTO @GroupDef
+SELECT *
+FROM 
+(SELECT 'SOUTH_HIGH_COSY2025' GradRequirementStudentGroupCode, 
+'Class of 2025 and Beyond Students South High' GradRequirementStudentGroup,
+'SELECT GradRequirementStudentId
+FROM gradCredits.GradRequirementStudent 
+WHERE GradRequirementSelectorId IS NULL
+AND ClassOfSchoolYear >= 2025
+AND GradPathSchoolId = 362' GradRequirementStudentGroupDefinition, 1 OrderOfPriority
+
+UNION ALL
+
+SELECT 'SOUTHWEST_HIGH_COSY2025', 'Class of 2025 and Beyond Students Southwest High',
+'SELECT GradRequirementStudentId
+FROM gradCredits.GradRequirementStudent 
+WHERE GradRequirementSelectorId IS NULL
+AND ClassOfSchoolYear >= 2025
+AND GradPathSchoolId = 364', 2 
+
+UNION ALL
+
+SELECT 'SOUTH_HIGH_DEFAULT', 'All Students South High',
+'SELECT GradRequirementStudentId
+FROM gradCredits.GradRequirementStudent 
+WHERE GradRequirementSelectorId IS NULL
+AND GradPathSchoolId = 362', 3
+
+UNION ALL
+
+SELECT 'SOUTHWEST_HIGH_DEFAULT', 'All Students Southwest High', 
+'SELECT GradRequirementStudentId
+FROM gradCredits.GradRequirementStudent 
+WHERE GradRequirementSelectorId IS NULL
+AND GradPathSchoolId = 364', 4
+
+UNION ALL
+
+SELECT 'DISTRICT_COSY2025', 'Class of 2025 and Beyond Students Districtwide',
+'SELECT GradRequirementStudentId
+FROM gradCredits.GradRequirementStudent 
+WHERE GradRequirementSelectorId IS NULL
+AND ClassOfSchoolYear >= 2025', 5 
+
+UNION ALL 
+
+SELECT 'DISTRICT_DEFAULT', 'All Students Districtwide',
+'SELECT GradRequirementStudentId
+FROM gradCredits.GradRequirementStudent 
+WHERE GradRequirementSelectorId IS NULL', 6
+) groupdef
+
+MERGE INTO gradCredits.GradRequirementStudentGroup AS TARGET
+USING @GroupDef AS SOURCE 
+ON TARGET.GradRequirementStudentGroupCode = SOURCE.GradRequirementStudentGroupCode
+AND TARGET.GradRequirementStudentGroup = SOURCE.GradRequirementStudentGroup
+AND TARGET.GradRequirementStudentGroupDefinition = SOURCE.GradRequirementStudentGroupDefinition
+AND TARGET.OrderOfPriority = SOURCE.OrderOfPriority
+WHEN NOT MATCHED THEN
+	INSERT (GradRequirementStudentGroupCode, 
+	GradRequirementStudentGroup, GradRequirementStudentGroupDefinition, OrderOfPriority)
+	VALUES (GradRequirementStudentGroupCode, 
+	GradRequirementStudentGroup, GradRequirementStudentGroupDefinition, OrderOfPriority)
+WHEN NOT MATCHED BY SOURCE THEN
+	DELETE;
+
+SET NOCOUNT OFF
+
+END
+
+GO

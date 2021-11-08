@@ -46,19 +46,21 @@ BEGIN
 		EXEC gradCredits.GetExecutionLogDetailId 'GradesReferenceSequenceLoad', @ExecutionLogId,
 					@GradesReferenceSequenceLogDetailId OUTPUT
 
-		EXEC gradCredits.LoadGrades NULL, NULL
+		EXEC gradCredits.LoadGrades NULL, NULL;
 
-		EXEC gradCredits.UpdateClassOfSchoolYear
+		EXEC gradCredits.UpdateClassOfSchoolYear;
 
-		EXEC gradCredits.UpdateDemographicStudentGroup
+		EXEC gradCredits.UpdateDemographicStudentGroup;
 
-		EXEC gradCredits.UpdateStudentSelectors
+		EXEC gradCredits.UpdateSelectorStudentGroup;
 
-		EXEC gradCredits.LoadCourseSequence NULL
+		EXEC gradCredits.LoadGradReference NULL;
 
-		EXEC gradCredits.LoadGradReference NULL
+		EXEC gradCredits.UpdateStudentSelectors;
 
-		EXEC gradCredits.ComputeGradCredits
+		EXEC gradCredits.LoadCourseSequence NULL;
+
+		EXEC gradCredits.ComputeGradCredits;
 	END TRY
 
 	BEGIN CATCH

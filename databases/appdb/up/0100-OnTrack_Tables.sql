@@ -25,8 +25,8 @@ IF OBJECT_ID('gradCredits.GradRequirementStudentSchoolAssociation',N'U') IS NOT 
 GO
 
 
-IF OBJECT_ID('gradCredits.gradCredits.GradRequirementDemographicStudentGroup',N'U') IS NOT NULL
-	DROP TABLE gradCredits.gradCredits.GradRequirementDemographicStudentGroup
+IF OBJECT_ID('gradCredits.GradRequirementDemographicStudentGroup',N'U') IS NOT NULL
+	DROP TABLE gradCredits.GradRequirementDemographicStudentGroup
 GO
 
 
@@ -104,6 +104,7 @@ CREATE TABLE gradCredits.GradRequirementDepartment
 	CONSTRAINT PK_GRAD_REQ_DPT PRIMARY KEY (GradRequirementDepartmentId),
 	CONSTRAINT UX_GRAD_REQ_DPT UNIQUE (GradRequirementDepartment),
 )
+GO
 
 
 CREATE TABLE gradCredits.GradRequirement
@@ -136,7 +137,7 @@ CREATE TABLE gradCredits.GradRequirementGradingPeriod
 	CONSTRAINT PK_GRAD_REQ_GP PRIMARY KEY (GradRequirementGradingPeriodId),
 	CONSTRAINT UX_GRAD_REQ_GP UNIQUE (GradRequirementGradingPeriod)
 )
-
+GO
 
 
 CREATE TABLE gradCredits.GradRequirementStudentGroup
@@ -145,9 +146,11 @@ CREATE TABLE gradCredits.GradRequirementStudentGroup
 	GradRequirementStudentGroupCode NVARCHAR(50) NOT NULL,
 	GradRequirementStudentGroup NVARCHAR(100) NOT NULL,
 	GradRequirementStudentGroupDefinition NVARCHAR(MAX) NOT NULL,
+	OrderOfPriority INT NOT NULL,
 	CONSTRAINT PK_GRAD_REQ_STDGRP PRIMARY KEY (GradRequirementStudentGroupId),
 	CONSTRAINT UX_GRAD_REQ_STDGRP UNIQUE (GradRequirementStudentGroup)
 )
+GO
 
 
 CREATE TABLE gradCredits.GradRequirementSchool
@@ -157,6 +160,7 @@ CREATE TABLE gradCredits.GradRequirementSchool
 	CONSTRAINT PK_GRAD_REQ_SCH PRIMARY KEY (GradRequirementSchoolId),
 	CONSTRAINT UX_GRAD_REQ_SCH UNIQUE (GradRequirementSchoolName)
 )
+GO
 
 
 CREATE TABLE gradCredits.GradRequirementSelector
@@ -173,7 +177,7 @@ CREATE TABLE gradCredits.GradRequirementSelector
 		REFERENCES gradCredits.GradRequirementStudentGroup(GradRequirementStudentGroupId)
 
 )
-
+GO
 
 
 CREATE TABLE gradCredits.GradRequirementReference
@@ -199,7 +203,7 @@ CREATE TABLE gradCredits.GradRequirementReference
 	CONSTRAINT FK_GRAD_DPT FOREIGN KEY (GradRequirementDepartmentId)
 		REFERENCES gradCredits.GradRequirementDepartment(GradRequirementDepartmentId)
 )
-
+GO
 
 
 CREATE TABLE gradCredits.GradRequirementCourseSequence
@@ -216,8 +220,9 @@ CREATE TABLE gradCredits.GradRequirementCourseSequence
 	SecondSequenceGradRequirementId INT NULL,
 	ThirdSequenceGradRequirementId INT NULL,
 	FourthSequenceGradRequirementId INT NULL,
+	GradRequirementSelectorId INT NULL,
 	CONSTRAINT PK_GRAD_REQ_CM PRIMARY KEY (GradRequirementCourseSequenceId),
-	CONSTRAINT UX_GRAD_REQ_CM UNIQUE (CourseCode, SchoolYear),
+	CONSTRAINT UX_GRAD_REQ_CM UNIQUE (CourseCode, SchoolYear, GradRequirementSelectorId),
 	CONSTRAINT FK_GRAD_DEPT FOREIGN KEY (GradRequirementDepartmentId) 
 		REFERENCES gradCredits.GradRequirementDepartment(GradRequirementDepartmentId),
 	CONSTRAINT FK_GRAD_RQ_CM FOREIGN KEY (SpecificGradRequirementId) 
@@ -229,7 +234,9 @@ CREATE TABLE gradCredits.GradRequirementCourseSequence
 	CONSTRAINT FK_GRAD_RQ3_CM FOREIGN KEY (ThirdSequenceGradRequirementId) 
 		REFERENCES gradCredits.GradRequirement(GradRequirementId),
 	CONSTRAINT FK_GRAD_RQ4_CM FOREIGN KEY (FourthSequenceGradRequirementId) 
-		REFERENCES gradCredits.GradRequirement(GradRequirementId)
+		REFERENCES gradCredits.GradRequirement(GradRequirementId),
+	CONSTRAINT FK_GRAD_RQ_CS_SEL FOREIGN KEY (GradRequirementSelectorId) 
+		REFERENCES gradCredits.GradRequirementSelector(GradRequirementSelectorId)
 )
 GO
 
