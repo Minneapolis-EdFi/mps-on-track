@@ -67,7 +67,9 @@ AS
 	INSERT INTO @StudentChartData
 	SELECT grs.StudentUniqueId,
 		CONCAT('[',grs.StudentChartId,'] ', grs.StudentName),
-		(SELECT CONCAT(CAST(MAX(SchoolYear) as varchar(10)),' - ',grgp.GradRequirementGradingPeriod)
+		(SELECT CONCAT(COALESCE(CAST(MAX(SchoolYear) as varchar(10)),
+			(SELECT SchoolYear FROM gradCredits.GradRequirementSchoolYear WHERE CurrentSchoolYearIndicator = 1)),
+			' - ',grgp.GradRequirementGradingPeriod)
 		FROM gradCredits.GradRequirementStudentCreditGrade cg
 			JOIN gradCredits.GradRequirementStudentGrade g
 			on cg.GradRequirementStudentGradeId = g.GradRequirementStudentGradeId
@@ -501,7 +503,9 @@ AS
 	SELECT StudentUniqueId,
 		CONCAT('[',grs.StudentChartId,'] ', grs.StudentName),
 		grsl.GradRequirementSelector,
-		(SELECT CONCAT(CAST(MAX(SchoolYear) as varchar(10)),' - ',LastGradedQuarter)
+		(SELECT CONCAT(COALESCE(CAST(MAX(SchoolYear) as varchar(10)),
+		(SELECT SchoolYear FROM gradCredits.GradRequirementSchoolYear WHERE CurrentSchoolYearIndicator = 1)),
+			' - ',LastGradedQuarter)
 		FROM gradCredits.GradRequirementStudentCreditGrade cg
 			JOIN gradCredits.GradRequirementStudentGrade g
 			on cg.GradRequirementStudentGradeId = g.GradRequirementStudentGradeId
