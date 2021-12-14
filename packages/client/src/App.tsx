@@ -76,13 +76,11 @@ const App: FC = () => {
 				</Tabs>
 			</div>
 
-			{!isProd && !isIE && (
-				<footer className="bg-gray-800 mt-4 px-2">
-					<code className="text-white mr-4">
-						You must complete your My Life Plan requirement. If you have not completed this, please speak with your counselor.
-					</code>
-				</footer>
-			)}
+			<footer className="bg-gray-800 mt-4 px-2">
+				<code className="text-white mr-4">
+					You must complete your My Life Plan requirement. If you have not completed this, please speak with your counselor.
+				</code>
+			</footer>
 		</div>
 	);
 };
